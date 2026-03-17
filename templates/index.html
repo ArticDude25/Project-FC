@@ -102,7 +102,7 @@
     .nf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
     .nf-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:transform 0.2s,border-color 0.2s,box-shadow 0.2s;text-decoration:none;display:flex;flex-direction:column;}
     .nf-card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:var(--shadow);}
-    .nf-card-placeholder{width:100%;height:140px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:2.5rem;}
+    .nf-card-thumb{width:100%;height:150px;display:block;border-radius:0;}
     .nf-card-body{padding:14px;flex:1;display:flex;flex-direction:column;gap:8px;}
     .nf-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-family:monospace;font-size:0.58rem;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;width:fit-content;}
     .b-REAL{background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:var(--green);}
@@ -867,13 +867,97 @@ var allArticles = [
 ];
 var verdictEmoji = { REAL:'✅', FAKE:'🚨', MISLEADING:'⚠️', PROPAGANDA:'🔴', SATIRE:'😏', UNVERIFIED:'❓' };
 
+function drawThumb(canvas, article) {
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+  var bgColors = {
+    FAKE:       dark ? ['#1a0808','#2d0f0f'] : ['#fff0f0','#ffd6d6'],
+    REAL:       dark ? ['#071a0e','#0f2d1a'] : ['#f0fff4','#d6ffe3'],
+    MISLEADING: dark ? ['#1a1008','#2d1e0f'] : ['#fff8f0','#ffe8d6'],
+    PROPAGANDA: dark ? ['#130a1a','#1e0f2d'] : ['#f8f0ff','#ead6ff'],
+    SATIRE:     dark ? ['#081018','#0f1e2d'] : ['#f0f8ff','#d6eeff'],
+    UNVERIFIED: dark ? ['#0f0f0f','#1a1a1a'] : ['#f5f5f5','#e8e8e8']
+  };
+
+  var accentColors = {
+    FAKE:'#ef4444', REAL:'#22c55e', MISLEADING:'#f97316',
+    PROPAGANDA:'#a855f7', SATIRE:'#3b82f6', UNVERIFIED:'#64748b'
+  };
+
+  var icons = {
+    FAKE:'🚨', REAL:'✅', MISLEADING:'⚠️',
+    PROPAGANDA:'📢', SATIRE:'🎭', UNVERIFIED:'❓'
+  };
+
+  var topicIcons = {
+    'petrol':'⛽', 'isro':'🚀', 'satellite':'🛸', 'economy':'📈', 'whatsapp':'💬',
+    'data':'🛡️', 'reserv':'⚖️', 'cancer':'🏥', 'rbi':'🏦', 'flood':'🌊',
+    'lakh':'💰', 'turmeric':'🌿', 'modi':'🏛️', 'election':'🗳️', 'covid':'🦠'
+  };
+
+  // Pick topic icon from title
+  var topicIcon = '📰';
+  var titleLower = article.title.toLowerCase();
+  for (var key in topicIcons) {
+    if (titleLower.includes(key)) { topicIcon = topicIcons[key]; break; }
+  }
+
+  var bg = bgColors[article.verdict] || bgColors.UNVERIFIED;
+  var accent = accentColors[article.verdict] || '#64748b';
+
+  // Background gradient
+  var grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, bg[0]);
+  grad.addColorStop(1, bg[1]);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Decorative circles
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = accent;
+  ctx.beginPath(); ctx.arc(W - 30, -20, 80, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(-20, H + 10, 70, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 0.05;
+  ctx.beginPath(); ctx.arc(W/2, H/2, 60, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Bottom accent bar
+  ctx.fillStyle = accent;
+  ctx.fillRect(0, H - 4, W, 4);
+
+  // Left accent line
+  ctx.fillStyle = accent;
+  ctx.globalAlpha = 0.6;
+  ctx.fillRect(0, 0, 3, H);
+  ctx.globalAlpha = 1;
+
+  // Big topic emoji
+  ctx.font = '52px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(topicIcon, W/2, H/2 + 10);
+
+  // Verdict icon bottom right
+  ctx.font = '22px serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(icons[article.verdict] || '❓', W - 14, H - 14);
+
+  // Source text top left
+  ctx.font = 'bold 10px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
+  ctx.fillText(article.source.toUpperCase(), 12, 20);
+}
+
 function renderCards(articles) {
   var grid = document.getElementById('nfGrid');
   if (!articles.length) { grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">No articles found.</div>'; return; }
-  grid.innerHTML = articles.map(function(a) {
+
+  grid.innerHTML = articles.map(function(a, idx) {
     var emoji = verdictEmoji[a.verdict] || '❓';
     return '<a class="nf-card" href="' + a.url + '" target="_blank" rel="noopener">'
-      + '<div class="nf-card-placeholder">📰</div>'
+      + '<canvas class="nf-card-thumb" id="nfthumb' + idx + '" width="400" height="150"></canvas>'
       + '<div class="nf-card-body">'
       + '<span class="nf-badge b-' + a.verdict + '">' + emoji + ' ' + a.verdict + '</span>'
       + '<div class="nf-card-title">' + a.title + '</div>'
@@ -881,14 +965,34 @@ function renderCards(articles) {
       + '<div class="nf-card-footer"><span class="nf-card-source">' + a.source + '</span><span class="nf-card-conf">' + a.confidence + '% confidence</span></div>'
       + '</div></a>';
   }).join('');
+
+  // Draw thumbnails after DOM is ready
+  setTimeout(function() {
+    articles.forEach(function(a, idx) {
+      var canvas = document.getElementById('nfthumb' + idx);
+      if (canvas) drawThumb(canvas, a);
+    });
+  }, 50);
 }
 
 function filterNews(btn, verdict) {
   document.querySelectorAll('.nf-filter').forEach(function(b) { b.classList.remove('on'); });
   btn.classList.add('on');
-  if (verdict === 'ALL') renderCards(allArticles);
-  else renderCards(allArticles.filter(function(a) { return a.verdict === verdict; }));
+  var filtered = verdict === 'ALL' ? allArticles : allArticles.filter(function(a) { return a.verdict === verdict; });
+  renderCards(filtered);
 }
+
+// Redraw thumbs when theme changes (so colors update)
+var _origToggleTheme = toggleTheme;
+toggleTheme = function() {
+  _origToggleTheme();
+  setTimeout(function() {
+    var cards = document.querySelectorAll('.nf-card-thumb');
+    cards.forEach(function(canvas, idx) {
+      if (allArticles[idx]) drawThumb(canvas, allArticles[idx]);
+    });
+  }, 100);
+};
 renderCards(allArticles);
 
 // ── DASHBOARD ──
