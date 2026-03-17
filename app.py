@@ -12,12 +12,12 @@ CORS(app)
 # ─────────────────────────────────────────────
 # PASTE YOUR GROQ API KEY HERE
 # ─────────────────────────────────────────────
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")  # ← replace
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")  # ← replace
 
 client = Groq(api_key=GROQ_API_KEY)
 
 MODEL        = "llama-3.3-70b-versatile"
-VISION_MODEL = "llama-3.2-90b-vision-preview"
+VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
 # ─────────────────────────────────────────────
 # SYSTEM PROMPT
