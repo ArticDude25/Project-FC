@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VeriNova — India's Fact Checker</title>
+  <style>
+    :root{--t:0.3s ease;}
+    [data-theme="dark"]{
+      --bg:#080c14;--bg2:#0d1220;--surface:#111827;--surface2:#1a2235;
+      --border:#1e2d45;--text:#e8eef8;--muted:#4a5a75;
+      --accent:#3b82f6;--accent2:#60a5fa;
+      --wa:#25D366;--ig1:#f09433;--ig2:#dc2743;--ig3:#bc1888;
+      --red:#ef4444;--green:#22c55e;--orange:#f97316;
+      --purple:#a855f7;--yellow:#eab308;
+      --shadow:0 4px 24px rgba(0,0,0,0.4);
+    }
+    [data-theme="light"]{
+      --bg:#f0f4f8;--bg2:#e8edf5;--surface:#ffffff;--surface2:#f8fafc;
+      --border:#d1dae8;--text:#0f172a;--muted:#64748b;
+      --accent:#2563eb;--accent2:#3b82f6;
+      --wa:#128C7E;--ig1:#e07b20;--ig2:#c02040;--ig3:#9c1570;
+      --red:#dc2626;--green:#16a34a;--orange:#ea580c;
+      --purple:#9333ea;--yellow:#ca8a04;
+      --shadow:0 4px 24px rgba(0,0,0,0.08);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;transition:background var(--t),color var(--t);}
+
+    /* ── NAV ── */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 32px;backdrop-filter:blur(12px);transition:background var(--t);}
+    .nav-logo{display:flex;align-items:center;gap:10px;cursor:pointer;text-decoration:none;}
+    .nav-logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+    .logo-name{font-family:Georgia,serif;font-size:1.15rem;font-weight:900;color:var(--text);}
+    .logo-name span{color:var(--accent);}
+    .logo-tag{font-family:monospace;font-size:0.5rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
+    .nav-links{display:flex;align-items:center;gap:2px;}
+    .nav-btn{padding:7px 13px;border-radius:6px;font-size:0.82rem;font-weight:500;color:var(--muted);background:none;border:none;cursor:pointer;transition:color 0.2s,background 0.2s;white-space:nowrap;}
+    .nav-btn:hover{color:var(--text);background:var(--surface2);}
+    .nav-btn.active{color:var(--accent);background:rgba(59,130,246,0.1);}
+    .nav-right{display:flex;align-items:center;gap:10px;}
+    .user-badge{display:none;align-items:center;gap:8px;padding:6px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:100px;font-size:0.8rem;color:var(--text);}
+    .logout-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.75rem;padding:0 0 0 4px;}
+    .login-nav-btn{padding:7px 16px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:0.82rem;font-weight:600;cursor:pointer;transition:opacity 0.2s;}
+    .login-nav-btn:hover{opacity:0.88;}
+    .theme-toggle{width:48px;height:26px;background:var(--surface2);border:1px solid var(--border);border-radius:100px;cursor:pointer;position:relative;flex-shrink:0;}
+    .theme-toggle::after{content:attr(data-icon);position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--accent);font-size:11px;transition:transform 0.3s;line-height:20px;text-align:center;}
+    [data-theme="light"] .theme-toggle::after{transform:translateX(22px);}
+    .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:4px;}
+    .hamburger span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transition:all 0.3s;}
+
+    /* ── PAGES ── */
+    .page{display:none;min-height:calc(100vh - 64px);padding-top:64px;opacity:0;transition:opacity 0.35s ease;}
+    .page.active{display:block;}
+    .page.visible{opacity:1;}
+
+    /* ── HOME PAGE ── */
+    .home-hero{min-height:calc(100vh - 64px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 20px;position:relative;overflow:hidden;}
+    .orb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;animation:orbFloat 8s ease-in-out infinite;}
+    .orb1{width:500px;height:500px;background:rgba(59,130,246,0.08);top:-100px;left:-100px;}
+    .orb2{width:400px;height:400px;background:rgba(168,85,247,0.07);bottom:-80px;right:-80px;animation-delay:3s;}
+    .orb3{width:300px;height:300px;background:rgba(37,211,102,0.05);top:40%;right:10%;animation-delay:5s;}
+    @keyframes orbFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-15px)}}
+    .hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 18px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:100px;font-family:monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent2);margin-bottom:28px;}
+    .hero-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+    .hero-title{font-family:Georgia,serif;font-size:clamp(3rem,8vw,6rem);font-weight:900;line-height:1.0;letter-spacing:-0.03em;color:var(--text);margin-bottom:20px;}
+    .hero-title .grad{font-style:italic;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .hero-sub{font-size:1rem;color:var(--muted);font-weight:300;max-width:540px;line-height:1.75;margin-bottom:44px;}
+    .hero-ctas{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:60px;}
+    .cta{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border:none;border-radius:8px;font-size:0.92rem;font-weight:600;cursor:pointer;transition:opacity 0.2s,transform 0.15s;text-decoration:none;}
+    .cta:hover{opacity:0.88;transform:translateY(-1px);}
+    .cta-wa{background:var(--wa);color:#fff;}
+    .cta-ig{background:linear-gradient(135deg,var(--ig1),var(--ig2),var(--ig3));color:#fff;}
+    .cta-outline{background:transparent;color:var(--text);border:1px solid var(--border);}
+    .cta-outline:hover{background:var(--surface2);}
+    .feature-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:860px;width:100%;}
+    .fc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:left;cursor:pointer;transition:border-color 0.25s,transform 0.2s,box-shadow 0.2s;}
+    .fc:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow);}
+    .fc-icon{font-size:1.8rem;margin-bottom:12px;}
+    .fc-title{font-weight:700;font-size:0.95rem;color:var(--text);margin-bottom:6px;}
+    .fc-desc{font-size:0.8rem;color:var(--muted);font-weight:300;line-height:1.6;}
+    .stats-row{display:flex;gap:40px;justify-content:center;padding:32px 20px;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+    .stat{text-align:center;}
+    .stat-num{font-family:Georgia,serif;font-size:2rem;font-weight:900;color:var(--accent);line-height:1;}
+    .stat-label{font-family:monospace;font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+
+    /* ── PAGE WRAPPER ── */
+    .page-wrap{max-width:900px;margin:0 auto;padding:48px 20px 80px;}
+    .page-eyebrow{font-family:monospace;font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px;}
+    .ew{color:var(--accent);}
+    .ew-wa{color:var(--wa);}
+    .ew-ig{color:var(--ig3);}
+    .page-title{font-family:Georgia,serif;font-size:clamp(2rem,5vw,3rem);font-weight:900;letter-spacing:-0.02em;color:var(--text);line-height:1.1;margin-bottom:8px;}
+    .page-desc{font-size:0.9rem;color:var(--muted);font-weight:300;line-height:1.7;max-width:560px;margin-bottom:36px;}
+
+    /* ── NEWS FEED ── */
+    .nf-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
+    .nf-filter{padding:7px 16px;background:var(--surface);border:1px solid var(--border);border-radius:100px;font-family:monospace;font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+    .nf-filter:hover{border-color:var(--accent);color:var(--text);}
+    .nf-filter.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+    .nf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+    .nf-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:transform 0.2s,border-color 0.2s,box-shadow 0.2s;text-decoration:none;display:flex;flex-direction:column;}
+    .nf-card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:var(--shadow);}
+    .nf-card-placeholder{width:100%;height:140px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:2.5rem;}
+    .nf-card-body{padding:14px;flex:1;display:flex;flex-direction:column;gap:8px;}
+    .nf-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-family:monospace;font-size:0.58rem;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;width:fit-content;}
+    .b-REAL{background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:var(--green);}
+    .b-FAKE{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:var(--red);}
+    .b-MISLEADING{background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.3);color:var(--orange);}
+    .b-PROPAGANDA{background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);color:var(--purple);}
+    .b-UNVERIFIED{background:rgba(100,116,139,0.12);border:1px solid rgba(100,116,139,0.3);color:var(--muted);}
+    .nf-card-title{font-size:0.88rem;font-weight:600;color:var(--text);line-height:1.5;flex:1;}
+    .nf-card-reason{font-size:0.75rem;color:var(--muted);font-weight:300;line-height:1.5;font-style:italic;}
+    .nf-card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border);}
+    .nf-card-source{font-family:monospace;font-size:0.58rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);}
+    .nf-card-conf{font-family:monospace;font-size:0.58rem;color:var(--muted);}
+
+    /* ── CHECKER ── */
+    .icard{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:18px;}
+    .icard-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-family:monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);}
+    .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+    .dw{background:var(--wa);}
+    .di{background:var(--ig3);}
+    .uzone{border:2px dashed var(--border);border-radius:8px;padding:32px 20px;text-align:center;cursor:pointer;transition:border-color 0.25s,background 0.25s;background:var(--surface2);margin:14px;}
+    .uzone:hover,.uzone.drag{border-color:var(--accent);background:rgba(59,130,246,0.04);}
+    .uzone input{display:none;}
+    .uzone-icon{font-size:2.2rem;margin-bottom:8px;}
+    .uzone-title{font-weight:600;font-size:0.92rem;color:var(--text);margin-bottom:4px;}
+    .uzone-sub{font-size:0.76rem;color:var(--muted);font-weight:300;}
+    .prev-wrap{display:none;position:relative;margin:14px;}
+    .prev-img{width:100%;max-height:260px;object-fit:contain;border:1px solid var(--border);border-radius:8px;background:var(--surface2);}
+    .prev-rm{position:absolute;top:8px;right:8px;background:var(--red);color:#fff;border:none;border-radius:4px;padding:5px 10px;font-family:monospace;font-size:0.6rem;cursor:pointer;}
+    .ipad{padding:14px;}
+    .flabel{display:block;font-family:monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+    textarea{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-family:'Segoe UI',sans-serif;font-size:0.9rem;color:var(--text);outline:none;transition:border-color 0.25s;line-height:1.7;resize:vertical;min-height:110px;}
+    textarea:focus{border-color:var(--accent);}
+    textarea::placeholder{color:var(--muted);}
+    .reel-tip{display:flex;gap:10px;align-items:flex-start;padding:11px 15px;background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:6px;margin:0 14px 14px;font-size:0.78rem;color:var(--muted);line-height:1.6;}
+    .srow{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-top:1px solid var(--border);}
+    .cc{font-family:monospace;font-size:0.6rem;color:var(--muted);}
+    .sbtn{display:inline-flex;align-items:center;gap:8px;padding:11px 26px;border:none;border-radius:6px;font-size:0.88rem;font-weight:600;cursor:pointer;transition:opacity 0.2s,transform 0.15s;}
+    .sbtn:hover{opacity:0.9;transform:translateY(-1px);}
+    .sbtn:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
+    .sbtn-wa{background:var(--wa);color:#fff;}
+    .sbtn-ig{background:linear-gradient(135deg,var(--ig1),var(--ig2),var(--ig3));color:#fff;}
+    .loader{display:none;flex-direction:column;align-items:center;gap:12px;padding:44px 0;}
+    .loader.on{display:flex;}
+    .spin{width:40px;height:40px;border:3px solid var(--border);border-radius:50%;animation:spin 0.8s linear infinite;}
+    .spin-wa{border-top-color:var(--wa);}
+    .spin-ig{border-top-color:var(--ig3);}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loader-txt{font-family:monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);}
+    .errbox{display:none;margin-top:10px;padding:11px 15px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:6px;font-family:monospace;font-size:0.7rem;color:var(--red);}
+    .errbox.on{display:block;}
+    .result{opacity:0;transform:translateY(14px);transition:opacity 0.5s,transform 0.5s;}
+    .result.on{opacity:1;transform:translateY(0);}
+    .lang-tag{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:100px;font-family:monospace;font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+    .claim-box{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:12px;}
+    .clabel{font-family:monospace;font-size:0.56rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+    .ctext{font-size:0.88rem;color:var(--text);font-style:italic;line-height:1.65;font-weight:300;}
+    .rbox{display:none;padding:11px 15px;background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.25);border-radius:8px;margin-bottom:12px;}
+    .rbox.on{display:block;}
+    .rtitle{font-family:monospace;font-size:0.56rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--yellow);margin-bottom:4px;}
+    .rtext{font-size:0.8rem;color:var(--text);font-weight:300;line-height:1.6;}
+    .vcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px;box-shadow:var(--shadow);}
+    .vbanner{padding:20px 22px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;}
+    .vb-FAKE{background:rgba(239,68,68,0.07);border-bottom:2px solid var(--red);}
+    .vb-REAL{background:rgba(34,197,94,0.07);border-bottom:2px solid var(--green);}
+    .vb-MISLEADING{background:rgba(249,115,22,0.07);border-bottom:2px solid var(--orange);}
+    .vb-SATIRE{background:rgba(59,130,246,0.07);border-bottom:2px solid var(--accent);}
+    .vb-PROPAGANDA{background:rgba(168,85,247,0.07);border-bottom:2px solid var(--purple);}
+    .vb-UNVERIFIED{background:rgba(100,116,139,0.07);border-bottom:2px solid var(--muted);}
+    .veyebrow{font-family:monospace;font-size:0.56rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+    .vword{font-family:Georgia,serif;font-size:clamp(2rem,5vw,3.2rem);font-weight:900;letter-spacing:-0.01em;line-height:1;}
+    .vw-FAKE{color:var(--red);}
+    .vw-REAL{color:var(--green);}
+    .vw-MISLEADING{color:var(--orange);}
+    .vw-SATIRE{color:var(--accent);}
+    .vw-PROPAGANDA{color:var(--purple);}
+    .vw-UNVERIFIED{color:var(--muted);}
+    .vlocal{font-family:sans-serif;font-size:0.95rem;color:var(--muted);margin-top:3px;}
+    .vsummary{font-size:0.82rem;color:var(--muted);margin-top:6px;font-weight:300;line-height:1.6;max-width:400px;}
+    .cbadge{flex-shrink:0;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;text-align:center;}
+    .cnum{font-family:Georgia,serif;font-size:1.8rem;font-weight:900;color:var(--text);line-height:1;}
+    .clbl{font-family:monospace;font-size:0.52rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-top:2px;}
+    .vrow{padding:14px 22px;border-bottom:1px solid var(--border);}
+    .vrow:last-child{border-bottom:none;}
+    .vlabel{font-family:monospace;font-size:0.56rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+    .rlist{list-style:none;display:flex;flex-direction:column;gap:7px;}
+    .rlist li{display:flex;gap:9px;font-size:0.84rem;line-height:1.65;color:var(--text);font-weight:300;}
+    .rlist li::before{content:"→";color:var(--accent);flex-shrink:0;font-family:monospace;font-size:0.78rem;margin-top:2px;}
+    .chips{display:flex;flex-wrap:wrap;gap:6px;}
+    .chip{padding:4px 11px;border-radius:100px;font-family:monospace;font-size:0.6rem;}
+    .ct{background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);color:var(--purple);}
+    .cs{background:var(--surface2);border:1px solid var(--border);color:var(--muted);}
+    .rs{font-size:0.84rem;color:var(--text);font-weight:300;line-height:1.75;}
+    .dccard{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px;}
+    .dchdr{padding:13px 18px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .dctitle{font-weight:600;font-size:0.88rem;color:var(--text);}
+    .dcsub{font-family:monospace;font-size:0.56rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-top:2px;}
+    .cpbtn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-family:monospace;font-size:0.58rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--text);cursor:pointer;transition:border-color 0.2s;}
+    .cpbtn:hover{border-color:var(--accent);}
+    .cpbtn.ok{color:var(--green);border-color:var(--green);}
+    .dctabs{display:flex;border-bottom:1px solid var(--border);}
+    .dctab{flex:1;padding:9px;background:transparent;border:none;font-family:monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:color 0.2s,border-color 0.2s;}
+    .dctab.on{color:var(--accent);border-bottom-color:var(--accent);}
+    .dcpanel{display:none;padding:14px 18px;}
+    .dcpanel.on{display:block;}
+    .combox{font-size:0.86rem;line-height:1.7;color:var(--text);font-weight:300;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:11px 13px;font-style:italic;}
+    .dkcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px;}
+    .dkhdr{padding:13px 18px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .dlbtn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:none;border-radius:4px;font-family:monospace;font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;color:#fff;cursor:pointer;transition:opacity 0.2s;}
+    .dlbtn:hover{opacity:0.85;}
+    .dl-wa{background:var(--wa);}
+    .dl-ig{background:linear-gradient(135deg,var(--ig2),var(--ig3));}
+    .cvwrap{padding:18px;background:var(--bg);display:flex;justify-content:center;}
+    canvas{border-radius:8px;max-width:100%;box-shadow:var(--shadow);}
+
+    /* ── DASHBOARD ── */
+    .db-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:28px;}
+    .db-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;text-align:center;transition:transform 0.2s,border-color 0.2s;}
+    .db-card:hover{transform:translateY(-2px);border-color:var(--accent);}
+    .db-icon{font-size:1.6rem;margin-bottom:8px;}
+    .db-num{font-family:Georgia,serif;font-size:2.2rem;font-weight:900;line-height:1;margin-bottom:5px;}
+    .db-lbl{font-family:monospace;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);}
+    .dc-TOTAL{border-top:3px solid var(--accent);} .dc-TOTAL .db-num{color:var(--accent);}
+    .dc-FAKE{border-top:3px solid var(--red);}     .dc-FAKE .db-num{color:var(--red);}
+    .dc-REAL{border-top:3px solid var(--green);}   .dc-REAL .db-num{color:var(--green);}
+    .dc-MISLEADING{border-top:3px solid var(--orange);} .dc-MISLEADING .db-num{color:var(--orange);}
+    .dc-PROPAGANDA{border-top:3px solid var(--purple);} .dc-PROPAGANDA .db-num{color:var(--purple);}
+    .dc-UNVERIFIED{border-top:3px solid var(--muted);}  .dc-UNVERIFIED .db-num{color:var(--muted);}
+    .db-history{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+    .db-hist-hdr{padding:14px 20px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .db-hist-title{font-weight:600;font-size:0.9rem;color:var(--text);}
+    .db-clear{padding:6px 12px;background:transparent;border:1px solid var(--border);border-radius:4px;font-family:monospace;font-size:0.58rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:border-color 0.2s,color 0.2s;}
+    .db-clear:hover{border-color:var(--red);color:var(--red);}
+    .db-empty{padding:32px;text-align:center;font-size:0.85rem;color:var(--muted);}
+    .db-row{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--border);transition:background 0.2s;}
+    .db-row:last-child{border-bottom:none;}
+    .db-row:hover{background:var(--surface2);}
+    .db-row-badge{flex-shrink:0;padding:3px 10px;border-radius:100px;font-family:monospace;font-size:0.58rem;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;}
+    .db-row-claim{flex:1;font-size:0.85rem;color:var(--text);font-weight:300;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .db-row-meta{flex-shrink:0;font-family:monospace;font-size:0.58rem;color:var(--muted);text-align:right;}
+
+    /* ── ABOUT ── */
+    .about-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:32px;}
+    .acard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:center;}
+    .anum{font-family:Georgia,serif;font-size:2.2rem;font-weight:900;color:var(--accent);opacity:0.4;line-height:1;margin-bottom:10px;}
+    .atitle{font-weight:700;font-size:0.92rem;color:var(--text);margin-bottom:5px;}
+    .adesc{font-size:0.78rem;color:var(--muted);font-weight:300;line-height:1.6;}
+    .lang-pills{display:flex;flex-wrap:wrap;gap:7px;margin-top:24px;}
+    .lang-pill{padding:5px 14px;background:var(--surface);border:1px solid var(--border);border-radius:100px;font-size:0.8rem;color:var(--muted);}
+
+    /* ── LOGIN MODAL ── */
+    .modal-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);align-items:center;justify-content:center;}
+    .modal-overlay.on{display:flex;}
+    .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 32px;width:100%;max-width:420px;margin:20px;box-shadow:0 24px 60px rgba(0,0,0,0.5);animation:modalIn 0.3s ease both;position:relative;}
+    @keyframes modalIn{from{opacity:0;transform:translateY(-20px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:4px 8px;border-radius:4px;}
+    .modal-close:hover{color:var(--text);}
+    .modal-logo{display:flex;align-items:center;gap:10px;margin-bottom:22px;}
+    .modal-logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+    .modal-logo-name{font-family:Georgia,serif;font-size:1.1rem;font-weight:900;color:var(--text);}
+    .modal-logo-name span{color:var(--accent);}
+    .modal-title{font-family:Georgia,serif;font-size:1.5rem;font-weight:900;color:var(--text);margin-bottom:5px;letter-spacing:-0.02em;}
+    .modal-sub{font-size:0.82rem;color:var(--muted);margin-bottom:24px;font-weight:300;line-height:1.6;}
+    .modal-field{margin-bottom:14px;}
+    .modal-label{display:block;font-family:monospace;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+    .modal-input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:'Segoe UI',sans-serif;font-size:0.9rem;color:var(--text);outline:none;transition:border-color 0.25s;}
+    .modal-input:focus{border-color:var(--accent);}
+    .modal-input::placeholder{color:var(--muted);}
+    .modal-btn{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:0.92rem;font-weight:600;cursor:pointer;transition:opacity 0.2s;margin-top:4px;}
+    .modal-btn:hover{opacity:0.9;}
+    .modal-switch{text-align:center;font-size:0.82rem;color:var(--muted);margin-top:16px;}
+    .modal-switch a{color:var(--accent);cursor:pointer;font-weight:500;}
+    .modal-err{display:none;padding:9px 13px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:6px;font-size:0.78rem;color:var(--red);margin-bottom:12px;}
+    .modal-err.on{display:block;}
+    .modal-ok{display:none;padding:9px 13px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:6px;font-size:0.78rem;color:var(--green);margin-bottom:12px;}
+    .modal-ok.on{display:block;}
+
+    /* ── FOOTER ── */
+    footer{text-align:center;padding:20px;border-top:1px solid var(--border);font-family:monospace;font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
+
+    /* ── MOBILE ── */
+    @media(max-width:768px){
+      nav{padding:0 16px;}
+      .nav-links{display:none;position:fixed;top:64px;left:0;right:0;background:var(--surface);border-bottom:1px solid var(--border);flex-direction:column;padding:12px;gap:4px;z-index:99;}
+      .nav-links.open{display:flex;}
+      .hamburger{display:flex;}
+      .feature-cards{grid-template-columns:1fr;}
+      .about-grid{grid-template-columns:1fr;}
+      .stats-row{gap:20px;flex-wrap:wrap;}
+      .vbanner{flex-direction:column;}
+      .srow{flex-direction:column;gap:10px;align-items:stretch;}
+      .sbtn{justify-content:center;}
+      .db-grid{grid-template-columns:repeat(2,1fr);}
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="showPage('home')">
+    <div class="nav-logo-icon">🛡️</div>
+    <div>
+      <div class="logo-name">Veri<span>Nova</span></div>
+      <div class="logo-tag">India's Fact Checker</div>
+    </div>
+  </div>
+
+  <div class="nav-links" id="navLinks">
+    <button class="nav-btn active" onclick="showPage('home')">🏠 Home</button>
+    <button class="nav-btn" onclick="showPage('newsfeed')">📰 News Feed</button>
+    <button class="nav-btn" onclick="showPage('whatsapp')">💬 WhatsApp</button>
+    <button class="nav-btn" onclick="showPage('instagram')">🎬 Instagram</button>
+    <button class="nav-btn" onclick="showPage('dashboard')">📊 Dashboard</button>
+    <button class="nav-btn" onclick="showPage('about')">ℹ️ About</button>
+  </div>
+
+  <div class="nav-right">
+    <div class="user-badge" id="userBadge">
+      <span>👤</span>
+      <span id="userName"></span>
+      <button class="logout-btn" onclick="logout()">✕</button>
+    </div>
+    <button class="login-nav-btn" id="loginNavBtn" onclick="openModal('login')">Login</button>
+    <button class="theme-toggle" id="themeBtn" data-icon="🌙" onclick="toggleTheme()"></button>
+    <button class="hamburger" id="hamburger" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- ════ HOME PAGE ════ -->
+<div class="page active" id="page-home">
+  <div class="home-hero">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+    <div class="hero-badge">🇮🇳 Built for India · सभी 22 भाषाओं में</div>
+    <h1 class="hero-title">Stop Fake News<br><span class="grad">Before It Spreads</span></h1>
+    <p class="hero-sub">Fact-check WhatsApp forwards and Instagram Reels instantly using advanced AI. Supports all 22 official Indian languages.</p>
+    <div class="hero-ctas">
+      <button class="cta cta-wa" onclick="showPage('whatsapp')">💬 Check WhatsApp Forward</button>
+      <button class="cta cta-ig" onclick="showPage('instagram')">🎬 Check Instagram Reel</button>
+      <button class="cta cta-outline" onclick="showPage('newsfeed')">📰 Browse News Feed</button>
+    </div>
+    <div class="feature-cards">
+      <div class="fc" onclick="showPage('whatsapp')">
+        <div class="fc-icon">💬</div>
+        <div class="fc-title">WhatsApp Checker</div>
+        <div class="fc-desc">Upload a screenshot or paste the message. Get instant verdict with debunk card to share back.</div>
+      </div>
+      <div class="fc" onclick="showPage('instagram')">
+        <div class="fc-icon">🎬</div>
+        <div class="fc-title">Instagram Reel Checker</div>
+        <div class="fc-desc">Upload reel screenshot and describe the video claim. Get a debunk comment to post directly.</div>
+      </div>
+      <div class="fc" onclick="showPage('newsfeed')">
+        <div class="fc-icon">📰</div>
+        <div class="fc-title">News Feed</div>
+        <div class="fc-desc">Browse curated Indian news headlines already fact-checked and labeled by VeriNova AI.</div>
+      </div>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat"><div class="stat-num">22</div><div class="stat-label">Indian Languages</div></div>
+    <div class="stat"><div class="stat-num">2</div><div class="stat-label">Platforms Covered</div></div>
+    <div class="stat"><div class="stat-num">AI</div><div class="stat-label">Powered by Groq</div></div>
+    <div class="stat"><div class="stat-num">Free</div><div class="stat-label">Always Free</div></div>
+  </div>
+  <footer>VeriNova &nbsp;·&nbsp; Powered by Groq AI &nbsp;·&nbsp; फर्जी खबरों के खिलाफ</footer>
+</div>
+
+<!-- ════ NEWS FEED PAGE ════ -->
+<div class="page" id="page-newsfeed">
+  <div class="page-wrap" style="max-width:1100px;">
+    <div class="page-eyebrow ew">📰 Fact Checked News</div>
+    <h2 class="page-title">Know What Is Real or Fake</h2>
+    <p class="page-desc">Curated Indian news headlines fact-checked by VeriNova AI. Click any card to read the full article.</p>
+    <div class="nf-filters">
+      <button class="nf-filter on" onclick="filterNews(this,'ALL')">All</button>
+      <button class="nf-filter" onclick="filterNews(this,'REAL')">✅ Real</button>
+      <button class="nf-filter" onclick="filterNews(this,'FAKE')">🚨 Fake</button>
+      <button class="nf-filter" onclick="filterNews(this,'MISLEADING')">⚠️ Misleading</button>
+      <button class="nf-filter" onclick="filterNews(this,'PROPAGANDA')">🔴 Propaganda</button>
+    </div>
+    <div class="nf-grid" id="nfGrid"></div>
+  </div>
+  <footer>VeriNova &nbsp;·&nbsp; Powered by Groq AI &nbsp;·&nbsp; फर्जी खबरों के खिलाफ</footer>
+</div>
+
+<!-- ════ WHATSAPP PAGE ════ -->
+<div class="page" id="page-whatsapp">
+  <div class="page-wrap">
+    <div class="page-eyebrow ew-wa">💬 WhatsApp Forward Checker</div>
+    <h2 class="page-title">Is This Forward Actually True?</h2>
+    <p class="page-desc">Upload a screenshot or paste the message text. VeriNova reads and fact-checks it in any Indian language instantly.</p>
+    <div class="icard">
+      <div class="icard-hdr"><span class="dot dw"></span> Screenshot or Message Text</div>
+      <div class="uzone" id="waz" onclick="document.getElementById('waf').click()">
+        <input type="file" id="waf" accept="image/*"/>
+        <div class="uzone-icon">📱</div>
+        <div class="uzone-title">Drop WhatsApp Screenshot Here</div>
+        <div class="uzone-sub">Click to upload · PNG, JPG, WEBP</div>
+      </div>
+      <div class="prev-wrap" id="wapw"><img class="prev-img" id="wapi" alt=""/><button class="prev-rm" onclick="rmImg('wa')">✕</button></div>
+      <div class="ipad">
+        <label class="flabel">Or paste message text</label>
+        <textarea id="watxt" placeholder="Paste WhatsApp forward here... any Indian language!"></textarea>
+      </div>
+      <div class="srow"><span class="cc" id="wacc">0 chars</span><button class="sbtn sbtn-wa" id="wabtn" onclick="checkWA()">🔍 Check This Forward</button></div>
+    </div>
+    <div class="loader" id="wald"><div class="spin spin-wa"></div><div class="loader-txt">VeriNova Analyzing...</div></div>
+    <div class="errbox" id="waerr"></div>
+    <div class="result" id="wares">
+      <div class="lang-tag" id="walang">🌐 —</div>
+      <div class="claim-box"><div class="clabel">Extracted Claim</div><div class="ctext" id="waclaim">—</div></div>
+      <div class="rbox" id="warb"><div class="rtitle">♻ Recirculation Warning</div><div class="rtext" id="warn"></div></div>
+      <div class="vcard"><div class="vbanner" id="wavb"><div><div class="veyebrow">AI Verdict</div><div class="vword" id="wavw">—</div><div class="vlocal" id="wavl"></div><div class="vsummary" id="wavs"></div></div><div class="cbadge"><div class="cnum" id="waconf">0%</div><div class="clbl">Confidence</div></div></div><div><div class="vrow"><div class="vlabel">Why</div><ul class="rlist" id="warl"></ul></div><div class="vrow"><div class="vlabel">Manipulation Tactics</div><div class="chips" id="watc"></div></div><div class="vrow"><div class="vlabel">Sources</div><div class="chips" id="wasc"></div></div><div class="vrow"><div class="vlabel">The Real Story</div><p class="rs" id="wars"></p></div></div></div>
+      <div class="dccard"><div class="dchdr"><div><div class="dctitle">💬 Debunk Comment</div><div class="dcsub">Copy and reply to this forward</div></div><button class="cpbtn" id="wacpb" onclick="copyC('wa')">📋 Copy</button></div><div class="dctabs"><button class="dctab on" onclick="dcTab('wa','loc')">Local Language</button><button class="dctab" onclick="dcTab('wa','en')">English</button></div><div class="dcpanel on" id="wadcl"><div class="combox" id="wacl">—</div></div><div class="dcpanel" id="wadce"><div class="combox" id="wace">—</div></div></div>
+      <div class="dkcard"><div class="dkhdr"><div><div class="dctitle">📥 Debunk Card</div><div class="dcsub">Download and share on WhatsApp</div></div><button class="dlbtn dl-wa" onclick="dlCard('wa')">⬇ Download PNG</button></div><div class="cvwrap"><canvas id="wacan" width="600" height="420"></canvas></div></div>
+    </div>
+  </div>
+  <footer>VeriNova &nbsp;·&nbsp; Powered by Groq AI &nbsp;·&nbsp; फर्जी खबरों के खिलाफ</footer>
+</div>
+
+<!-- ════ INSTAGRAM PAGE ════ -->
+<div class="page" id="page-instagram">
+  <div class="page-wrap">
+    <div class="page-eyebrow ew-ig">🎬 Instagram Reel Checker</div>
+    <h2 class="page-title">Is This Reel Spreading Lies?</h2>
+    <p class="page-desc">Upload a reel screenshot AND describe what the video claims. The caption is often unrelated clickbait — focus on what you see or hear in the video.</p>
+    <div class="reel-tip"><span>💡</span><span><strong>Tip:</strong> Describe what the <em>video itself</em> claims — not the caption text which is often misleading clickbait.</span></div>
+    <div class="icard">
+      <div class="icard-hdr"><span class="dot di"></span> Screenshot + Claim Description</div>
+      <div class="uzone" id="igz" onclick="document.getElementById('igf').click()">
+        <input type="file" id="igf" accept="image/*"/>
+        <div class="uzone-icon">🎬</div>
+        <div class="uzone-title">Upload Reel Screenshot</div>
+        <div class="uzone-sub">Claude Vision reads on-screen text · PNG, JPG, WEBP</div>
+      </div>
+      <div class="prev-wrap" id="igpw"><img class="prev-img" id="igpi" alt=""/><button class="prev-rm" onclick="rmImg('ig')">✕</button></div>
+      <div class="ipad">
+        <label class="flabel">What does the VIDEO claim? *</label>
+        <textarea id="igclaim" placeholder="e.g. 'This reel claims Modi was arrested'..."></textarea>
+        <br/><label class="flabel" style="margin-top:10px">Extra context (optional)</label>
+        <textarea id="igctx" style="min-height:70px" placeholder="Any extra context..."></textarea>
+      </div>
+      <div class="srow"><span class="cc" id="igcc">0 chars</span><button class="sbtn sbtn-ig" id="igbtn" onclick="checkIG()">🎬 Fact-Check This Reel</button></div>
+    </div>
+    <div class="loader" id="igld"><div class="spin spin-ig"></div><div class="loader-txt">VeriNova Analyzing...</div></div>
+    <div class="errbox" id="igerr"></div>
+    <div class="result" id="igres">
+      <div class="lang-tag" id="iglang">🌐 —</div>
+      <div class="claim-box"><div class="clabel">Extracted Claim</div><div class="ctext" id="igcout">—</div></div>
+      <div class="rbox" id="igrb"><div class="rtitle">♻ Recirculation Warning</div><div class="rtext" id="igrn"></div></div>
+      <div class="vcard"><div class="vbanner" id="igvb"><div><div class="veyebrow">AI Verdict</div><div class="vword" id="igvw">—</div><div class="vlocal" id="igvl"></div><div class="vsummary" id="igvs"></div></div><div class="cbadge"><div class="cnum" id="igconf">0%</div><div class="clbl">Confidence</div></div></div><div><div class="vrow"><div class="vlabel">Why</div><ul class="rlist" id="igrl"></ul></div><div class="vrow"><div class="vlabel">Manipulation Tactics</div><div class="chips" id="igtc"></div></div><div class="vrow"><div class="vlabel">Sources</div><div class="chips" id="igsc"></div></div><div class="vrow"><div class="vlabel">The Real Story</div><p class="rs" id="igrs"></p></div></div></div>
+      <div class="dccard"><div class="dchdr"><div><div class="dctitle">💬 Debunk Comment</div><div class="dcsub">Paste in reel comments</div></div><button class="cpbtn" id="igcpb" onclick="copyC('ig')">📋 Copy</button></div><div class="dctabs"><button class="dctab on" onclick="dcTab('ig','loc')">Local Language</button><button class="dctab" onclick="dcTab('ig','en')">English</button></div><div class="dcpanel on" id="igdcl"><div class="combox" id="igcl">—</div></div><div class="dcpanel" id="igdce"><div class="combox" id="igce">—</div></div></div>
+      <div class="dkcard"><div class="dkhdr"><div><div class="dctitle">📥 Debunk Card</div><div class="dcsub">Share as Instagram story</div></div><button class="dlbtn dl-ig" onclick="dlCard('ig')">⬇ Download PNG</button></div><div class="cvwrap"><canvas id="igcan" width="600" height="420"></canvas></div></div>
+    </div>
+  </div>
+  <footer>VeriNova &nbsp;·&nbsp; Powered by Groq AI &nbsp;·&nbsp; फर्जी खबरों के खिलाफ</footer>
+</div>
+
+<!-- ════ DASHBOARD PAGE ════ -->
+<div class="page" id="page-dashboard">
+  <div class="page-wrap">
+    <div class="page-eyebrow ew">📊 Your Activity</div>
+    <h2 class="page-title">Dashboard</h2>
+    <p class="page-desc">Live stats of all fact checks done in this session. Login to save history permanently.</p>
+    <div class="db-grid">
+      <div class="db-card dc-TOTAL"><div class="db-icon">🛡️</div><div class="db-num" id="dbTotal">0</div><div class="db-lbl">Total Checks</div></div>
+      <div class="db-card dc-FAKE"><div class="db-icon">🚨</div><div class="db-num" id="dbFake">0</div><div class="db-lbl">Fake</div></div>
+      <div class="db-card dc-REAL"><div class="db-icon">✅</div><div class="db-num" id="dbReal">0</div><div class="db-lbl">Real</div></div>
+      <div class="db-card dc-MISLEADING"><div class="db-icon">⚠️</div><div class="db-num" id="dbMisleading">0</div><div class="db-lbl">Misleading</div></div>
+      <div class="db-card dc-PROPAGANDA"><div class="db-icon">🔴</div><div class="db-num" id="dbPropaganda">0</div><div class="db-lbl">Propaganda</div></div>
+      <div class="db-card dc-UNVERIFIED"><div class="db-icon">❓</div><div class="db-num" id="dbUnverified">0</div><div class="db-lbl">Unverified</div></div>
+    </div>
+    <div class="db-history">
+      <div class="db-hist-hdr"><div class="db-hist-title">Recent Checks</div><button class="db-clear" onclick="clearHistory()">🗑 Clear</button></div>
+      <div id="dbHistory"><div class="db-empty">No checks yet. Start fact-checking!</div></div>
+    </div>
+  </div>
+  <footer>VeriNova &nbsp;·&nbsp; Powered by Groq AI &nbsp;·&nbsp; फर्जी खबरों के खिलाफ</footer>
+</div>
+
+<!-- ════ ABOUT PAGE ════ -->
+<div class="page" id="page-about">
+  <div class="page-wrap">
+    <div class="page-eyebrow ew">ℹ️ About</div>
+    <h2 class="page-title">About VeriNova</h2>
+    <p class="page-desc">India's first AI-powered fact-checker built specifically for WhatsApp forwards and Instagram Reels — covering all 22 official Indian languages.</p>
+    <div class="about-grid">
+      <div class="acard"><div class="anum">01</div><div class="atitle">Upload or Describe</div><div class="adesc">Share a screenshot or describe the claim in any Indian language.</div></div>
+      <div class="acard"><div class="anum">02</div><div class="atitle">AI Analysis</div><div class="adesc">Groq LLaMA AI reads the content and cross-checks against known facts and sources.</div></div>
+      <div class="acard"><div class="anum">03</div><div class="atitle">Stop the Spread</div><div class="adesc">Get a verdict, debunk comment, and card to fight back against misinformation.</div></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;margin-bottom:24px;">
+      <h3 style="font-family:Georgia,serif;font-size:1.2rem;font-weight:900;color:var(--text);margin-bottom:10px;">All 22 Official Indian Languages</h3>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;font-weight:300;">VeriNova automatically detects and fact-checks in any language</p>
+      <div class="lang-pills" id="langPills"></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;">
+      <h3 style="font-family:Georgia,serif;font-size:1.2rem;font-weight:900;color:var(--text);margin-bottom:10px;">Tech Stack</h3>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px;">
+        <div style="padding:14px;background:var(--bg2);border-radius:8px;font-size:0.82rem;color:var(--muted);">🐍 <strong style="color:var(--text)">Python + Flask</strong> — Backend</div>
+        <div style="padding:14px;background:var(--bg2);border-radius:8px;font-size:0.82rem;color:var(--muted);">⚡ <strong style="color:var(--text)">Groq + LLaMA 3.3 70B</strong> — AI Model</div>
+        <div style="padding:14px;background:var(--bg2);border-radius:8px;font-size:0.82rem;color:var(--muted);">🎨 <strong style="color:var(--text)">HTML + CSS + JS</strong> — Frontend</div>
+        <div style="padding:14px;background:var(--bg2);border-radius:8px;font-size:0.82rem;color:var(--muted);">👁️ <strong style="color:var(--text)">LLaMA 3.2 Vision</strong> — Image Reading</div>
+      </div>
+    </div>
+  </div>
+  <footer>VeriNova &nbsp;·&nbsp; Powered by Groq AI &nbsp;·&nbsp; फर्जी खबरों के खिलाफ</footer>
+</div>
+
+<!-- ════ LOGIN MODAL ════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <!-- Login -->
+    <div id="loginPanel">
+      <div class="modal-logo"><div class="modal-logo-icon">🛡️</div><div class="modal-logo-name">Veri<span>Nova</span></div></div>
+      <div class="modal-title">Welcome Back</div>
+      <div class="modal-sub">Login to save your fact-check history permanently.</div>
+      <div class="modal-err" id="loginErr"></div>
+      <div class="modal-ok" id="loginOk"></div>
+      <div class="modal-field"><label class="modal-label">Email</label><input class="modal-input" type="email" id="loginEmail" placeholder="you@example.com"/></div>
+      <div class="modal-field"><label class="modal-label">Password</label><input class="modal-input" type="password" id="loginPwd" placeholder="Your password"/></div>
+      <button class="modal-btn" onclick="doLogin()">Login →</button>
+      <div class="modal-switch">No account? <a onclick="openModal('signup')">Sign up free</a></div>
+    </div>
+
+    <!-- Signup -->
+    <div id="signupPanel" style="display:none">
+      <div class="modal-logo"><div class="modal-logo-icon">🛡️</div><div class="modal-logo-name">Veri<span>Nova</span></div></div>
+      <div class="modal-title">Create Account</div>
+      <div class="modal-sub">Join VeriNova to save and track your fact-checks.</div>
+      <div class="modal-err" id="signupErr"></div>
+      <div class="modal-ok" id="signupOk"></div>
+      <div class="modal-field"><label class="modal-label">Full Name</label><input class="modal-input" type="text" id="signupName" placeholder="Your name"/></div>
+      <div class="modal-field"><label class="modal-label">Email</label><input class="modal-input" type="email" id="signupEmail" placeholder="you@example.com"/></div>
+      <div class="modal-field"><label class="modal-label">Password</label><input class="modal-input" type="password" id="signupPwd" placeholder="Min 6 characters"/></div>
+      <button class="modal-btn" style="background:linear-gradient(135deg,var(--accent),var(--purple))" onclick="doSignup()">Create Account →</button>
+      <div class="modal-switch">Already have an account? <a onclick="openModal('login')">Login</a></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── PAGE NAVIGATION ──
+var currentPage = 'home';
+
+function showPage(name) {
+  // Hide all pages
+  document.querySelectorAll('.page').forEach(function(p) {
+    p.classList.remove('active', 'visible');
+  });
+  // Update nav buttons
+  document.querySelectorAll('.nav-btn').forEach(function(b) {
+    b.classList.remove('active');
+  });
+
+  // Show selected page
+  var page = document.getElementById('page-' + name);
+  if (page) {
+    page.classList.add('active');
+    setTimeout(function() { page.classList.add('visible'); }, 10);
+  }
+
+  // Highlight nav button
+  document.querySelectorAll('.nav-btn').forEach(function(b) {
+    if (b.textContent.toLowerCase().includes(name) ||
+        (name === 'home' && b.textContent.includes('Home')) ||
+        (name === 'newsfeed' && b.textContent.includes('News')) ||
+        (name === 'whatsapp' && b.textContent.includes('WhatsApp')) ||
+        (name === 'instagram' && b.textContent.includes('Instagram')) ||
+        (name === 'dashboard' && b.textContent.includes('Dashboard')) ||
+        (name === 'about' && b.textContent.includes('About'))) {
+      b.classList.add('active');
+    }
+  });
+
+  currentPage = name;
+  window.scrollTo(0, 0);
+  closeMenu();
+
+  // Update dashboard when visiting it
+  if (name === 'dashboard') updateDashboard();
+}
+
+// ── MOBILE MENU ──
+function toggleMenu() {
+  document.getElementById('navLinks').classList.toggle('open');
+}
+function closeMenu() {
+  document.getElementById('navLinks').classList.remove('open');
+}
+
+// ── THEME ──
+function toggleTheme() {
+  var h = document.documentElement;
+  var dark = h.getAttribute('data-theme') === 'dark';
+  h.setAttribute('data-theme', dark ? 'light' : 'dark');
+  document.getElementById('themeBtn').setAttribute('data-icon', dark ? '☀️' : '🌙');
+  localStorage.setItem('vn-theme', dark ? 'light' : 'dark');
+}
+var st = localStorage.getItem('vn-theme') || 'dark';
+document.documentElement.setAttribute('data-theme', st);
+document.getElementById('themeBtn').setAttribute('data-icon', st === 'dark' ? '🌙' : '☀️');
+
+// ── AUTH ──
+var currentUser = JSON.parse(localStorage.getItem('vn-user') || 'null');
+
+function openModal(type) {
+  document.getElementById('modalOverlay').classList.add('on');
+  document.getElementById('loginPanel').style.display  = type === 'login'  ? 'block' : 'none';
+  document.getElementById('signupPanel').style.display = type === 'signup' ? 'block' : 'none';
+  clearModalMsgs();
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('on'); }
+function closeModalOutside(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
+function clearModalMsgs() {
+  ['loginErr','loginOk','signupErr','signupOk'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.classList.remove('on'); el.textContent = ''; }
+  });
+}
+function showMsg(id, msg) { var el = document.getElementById(id); el.textContent = msg; el.classList.add('on'); }
+
+function simpleHash(str) {
+  var h = 0;
+  for (var i = 0; i < str.length; i++) { h = ((h << 5) - h) + str.charCodeAt(i); h = h & h; }
+  return h.toString(36);
+}
+
+function doSignup() {
+  var name = document.getElementById('signupName').value.trim();
+  var email = document.getElementById('signupEmail').value.trim();
+  var pwd   = document.getElementById('signupPwd').value;
+  if (!name)  return showMsg('signupErr', 'Please enter your name.');
+  if (!email || !email.includes('@')) return showMsg('signupErr', 'Please enter a valid email.');
+  if (pwd.length < 6) return showMsg('signupErr', 'Password must be at least 6 characters.');
+  var users = JSON.parse(localStorage.getItem('vn-users') || '{}');
+  if (users[email]) return showMsg('signupErr', 'Account already exists with this email.');
+  users[email] = { name: name, password: simpleHash(pwd) };
+  localStorage.setItem('vn-users', JSON.stringify(users));
+  showMsg('signupOk', '✅ Account created! Logging you in...');
+  setTimeout(function() { loginUser(name, email); closeModal(); }, 1200);
+}
+
+function doLogin() {
+  var email = document.getElementById('loginEmail').value.trim();
+  var pwd   = document.getElementById('loginPwd').value;
+  if (!email) return showMsg('loginErr', 'Please enter your email.');
+  if (!pwd)   return showMsg('loginErr', 'Please enter your password.');
+  var users = JSON.parse(localStorage.getItem('vn-users') || '{}');
+  var user  = users[email];
+  if (!user) return showMsg('loginErr', 'No account found with this email.');
+  if (user.password !== simpleHash(pwd)) return showMsg('loginErr', 'Incorrect password.');
+  showMsg('loginOk', '✅ Welcome back, ' + user.name + '!');
+  setTimeout(function() { loginUser(user.name, email); closeModal(); }, 1000);
+}
+
+function loginUser(name, email) {
+  currentUser = { name: name, email: email };
+  localStorage.setItem('vn-user', JSON.stringify(currentUser));
+  checkHistory = JSON.parse(localStorage.getItem('vn-history-' + email) || '[]');
+  updateNavbar();
+  updateDashboard();
+}
+
+function logout() {
+  currentUser = null;
+  checkHistory = [];
+  localStorage.removeItem('vn-user');
+  updateNavbar();
+  updateDashboard();
+}
+
+function updateNavbar() {
+  var badge = document.getElementById('userBadge');
+  var btn   = document.getElementById('loginNavBtn');
+  var name  = document.getElementById('userName');
+  if (currentUser) {
+    badge.style.display = 'flex';
+    btn.style.display   = 'none';
+    name.textContent    = currentUser.name.split(' ')[0];
+  } else {
+    badge.style.display = 'none';
+    btn.style.display   = 'block';
+  }
+}
+updateNavbar();
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+
+// ── FILES ──
+var FILES = { wa: null, ig: null };
+['wa','ig'].forEach(function(p) {
+  var z = document.getElementById(p === 'wa' ? 'waz' : 'igz');
+  var i = document.getElementById(p === 'wa' ? 'waf' : 'igf');
+  z.addEventListener('dragover', function(e) { e.preventDefault(); z.classList.add('drag'); });
+  z.addEventListener('dragleave', function() { z.classList.remove('drag'); });
+  z.addEventListener('drop', function(e) { e.preventDefault(); z.classList.remove('drag'); var f = e.dataTransfer.files[0]; if (f && f.type.startsWith('image/')) showPrev(p, f); });
+  i.addEventListener('change', function(e) { if (e.target.files[0]) showPrev(p, e.target.files[0]); });
+});
+function showPrev(p, f) {
+  FILES[p] = f;
+  var r = new FileReader();
+  r.onload = function(e) {
+    document.getElementById(p === 'wa' ? 'wapi' : 'igpi').src = e.target.result;
+    document.getElementById(p === 'wa' ? 'wapw' : 'igpw').style.display = 'block';
+    document.getElementById(p === 'wa' ? 'waz'  : 'igz').style.display  = 'none';
+  };
+  r.readAsDataURL(f);
+}
+function rmImg(p) {
+  FILES[p] = null;
+  document.getElementById(p === 'wa' ? 'waf'  : 'igf').value = '';
+  document.getElementById(p === 'wa' ? 'wapw' : 'igpw').style.display = 'none';
+  document.getElementById(p === 'wa' ? 'waz'  : 'igz').style.display  = 'block';
+}
+document.getElementById('watxt').addEventListener('input', function(e) { document.getElementById('wacc').textContent = e.target.value.length + ' chars'; });
+document.getElementById('igclaim').addEventListener('input', function(e) { document.getElementById('igcc').textContent = e.target.value.length + ' chars'; });
+
+// ── API CALLS ──
+async function checkWA() {
+  var txt = document.getElementById('watxt').value.trim();
+  if (!FILES.wa && !txt) return showErr('wa', 'Please upload a screenshot or paste message text.');
+  await doCheck('wa', '/check/whatsapp', { image: FILES.wa, message: txt });
+}
+async function checkIG() {
+  var claim = document.getElementById('igclaim').value.trim();
+  var ctx   = document.getElementById('igctx').value.trim();
+  if (!FILES.ig && !claim) return showErr('ig', 'Please upload a screenshot or describe the claim.');
+  await doCheck('ig', '/check/reel', { image: FILES.ig, claim: claim, context: ctx });
+}
+async function doCheck(p, ep, f) {
+  var btn = document.getElementById(p + 'btn');
+  var ld  = document.getElementById(p + 'ld');
+  var res = document.getElementById(p + 'res');
+  var err = document.getElementById(p + 'err');
+  res.classList.remove('on'); err.classList.remove('on'); err.textContent = '';
+  btn.disabled = true; ld.classList.add('on');
+  try {
+    var fd = new FormData();
+    if (f.image)   fd.append('image',   f.image);
+    if (f.message) fd.append('message', f.message);
+    if (f.claim)   fd.append('claim',   f.claim);
+    if (f.context) fd.append('context', f.context);
+    var r = await fetch(ep, { method: 'POST', body: fd });
+    var d = await r.json();
+    if (!r.ok || d.error) throw new Error(d.error || 'Server error');
+    populate(p, d);
+    res.classList.add('on');
+    res.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch(e) { showErr(p, e.message); }
+  finally { btn.disabled = false; ld.classList.remove('on'); }
+}
+function showErr(p, m) { var e = document.getElementById(p + 'err'); e.textContent = '⚠ ' + m; e.classList.add('on'); }
+
+// ── POPULATE RESULT ──
+var VC = { FAKE:'#ef4444', REAL:'#22c55e', MISLEADING:'#f97316', SATIRE:'#3b82f6', PROPAGANDA:'#a855f7', UNVERIFIED:'#64748b' };
+var badgeColors = {
+  REAL:'background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#22c55e',
+  FAKE:'background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#ef4444',
+  MISLEADING:'background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.3);color:#f97316',
+  PROPAGANDA:'background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);color:#a855f7',
+  SATIRE:'background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);color:#3b82f6',
+  UNVERIFIED:'background:rgba(100,116,139,0.12);border:1px solid rgba(100,116,139,0.3);color:#64748b'
+};
+
+function populate(p, d) {
+  document.getElementById(p + 'lang').textContent = '🌐 Language: ' + (d.detected_language || 'English');
+  document.getElementById(p === 'ig' ? 'igcout' : 'waclaim').textContent = d.extracted_claim || '—';
+  var rb = document.getElementById(p + 'rb');
+  if (d.recirculation_warning && d.recirculation_note) { document.getElementById(p + 'rn').textContent = d.recirculation_note; rb.classList.add('on'); }
+  else rb.classList.remove('on');
+  var v = d.verdict || 'UNVERIFIED';
+  document.getElementById(p + 'vb').className = 'vbanner vb-' + v;
+  var vw = document.getElementById(p + 'vw'); vw.className = 'vword vw-' + v; vw.textContent = v;
+  document.getElementById(p + 'vl').textContent   = d.verdict_local || '';
+  document.getElementById(p + 'vs').textContent   = d.summary || '';
+  document.getElementById(p + 'conf').textContent = (d.confidence || 0) + '%';
+  var rl = document.getElementById(p + 'rl'); rl.innerHTML = '';
+  (d.reasoning || []).forEach(function(r) { var li = document.createElement('li'); li.textContent = r; rl.appendChild(li); });
+  var tc = document.getElementById(p + 'tc'); tc.innerHTML = '';
+  (d.manipulation_tactics || []).forEach(function(t) { var s = document.createElement('span'); s.className = 'chip ct'; s.textContent = t; tc.appendChild(s); });
+  var sc = document.getElementById(p + 'sc'); sc.innerHTML = '';
+  (d.sources || []).forEach(function(s) { var sp = document.createElement('span'); sp.className = 'chip cs'; sp.textContent = s; sc.appendChild(sp); });
+  document.getElementById(p + 'rs').textContent = d.what_actually_happened || '—';
+  document.getElementById(p + 'cl').textContent = d.debunk_comment || '—';
+  document.getElementById(p + 'ce').textContent = d.debunk_comment_english || '—';
+  drawCard(p, d);
+  addToHistory(p, d.extracted_claim, d.verdict, d.confidence);
+}
+
+// ── DC TABS ──
+function dcTab(p, tab) {
+  document.getElementById(p + 'dcl').classList.toggle('on', tab === 'loc');
+  document.getElementById(p + 'dce').classList.toggle('on', tab === 'en');
+  var sec = document.getElementById('page-' + (p === 'wa' ? 'whatsapp' : 'instagram'));
+  sec.querySelectorAll('.dctab').forEach(function(t, i) { t.classList.toggle('on', (i===0&&tab==='loc')||(i===1&&tab==='en')); });
+}
+function copyC(p) {
+  var lp = document.getElementById(p + 'dcl');
+  var txt = lp.classList.contains('on') ? document.getElementById(p + 'cl').textContent : document.getElementById(p + 'ce').textContent;
+  navigator.clipboard.writeText(txt).then(function() { var b = document.getElementById(p + 'cpb'); b.textContent = '✅ Copied!'; b.classList.add('ok'); setTimeout(function() { b.textContent = '📋 Copy'; b.classList.remove('ok'); }, 2000); });
+}
+
+// ── DEBUNK CARD ──
+function wrapTxt(ctx, text, x, y, mw, lh) {
+  var words = text.split(' '); var line = ''; var lines = [];
+  for (var i = 0; i < words.length; i++) { var t = line + words[i] + ' '; if (ctx.measureText(t).width > mw && line) { lines.push(line.trim()); line = words[i] + ' '; } else line = t; }
+  if (line) lines.push(line.trim());
+  lines.forEach(function(l, i) { ctx.fillText(l, x, y + i * lh); });
+  return lines.length;
+}
+function drawCard(p, d) {
+  var canvas = document.getElementById(p + 'can'); var ctx = canvas.getContext('2d');
+  var W = 600, H = 420; canvas.width = W; canvas.height = H;
+  var vc = VC[d.verdict] || '#64748b';
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  var isIG = p === 'ig';
+  ctx.fillStyle = dark ? '#080c14' : '#f0f4f8'; ctx.fillRect(0, 0, W, H);
+  if (isIG) { var g = ctx.createLinearGradient(0,0,W,0); g.addColorStop(0,'#f09433'); g.addColorStop(0.5,'#dc2743'); g.addColorStop(1,'#bc1888'); ctx.fillStyle = g; } else ctx.fillStyle = '#25D366';
+  ctx.fillRect(0, 0, W, 5);
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)'; ctx.fillRect(0, 5, W, 52);
+  ctx.fillStyle = dark ? '#e8eef8' : '#0f172a'; ctx.font = 'bold 20px sans-serif'; ctx.fillText('Veri', 18, 38);
+  ctx.fillStyle = '#3b82f6'; ctx.fillText('Nova', 55, 38);
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)'; ctx.font = '10px monospace'; ctx.fillText("INDIA'S FACT CHECKER", 115, 38);
+  ctx.fillStyle = vc; ctx.beginPath(); ctx.roundRect(W-130, 13, 110, 30, 4); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(d.verdict || '—', W-75, 33); ctx.textAlign = 'left';
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'; ctx.fillRect(0, 57, W, 76);
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.35)'; ctx.font = '10px monospace'; ctx.fillText('CLAIM CHECKED', 18, 75);
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)'; ctx.font = 'italic 12px sans-serif';
+  wrapTxt(ctx, '"' + (d.extracted_claim || '').substring(0, 115) + '"', 18, 93, W-36, 17);
+  ctx.fillStyle = vc + '22'; ctx.fillRect(0, 133, W, 66);
+  ctx.fillStyle = vc; ctx.font = 'bold 40px sans-serif'; ctx.fillText(d.verdict || '—', 18, 183);
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)'; ctx.font = '12px sans-serif'; ctx.fillText((d.summary || '').substring(0, 80), 18, 200);
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.35)'; ctx.font = '10px monospace'; ctx.fillText('REASONS', 18, 228);
+  (d.reasoning || []).slice(0, 2).forEach(function(r, i) { ctx.fillStyle = vc; ctx.font = '12px sans-serif'; ctx.fillText('>', 18, 246+i*22); ctx.fillStyle = dark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)'; ctx.fillText(r.substring(0, 74), 34, 246+i*22); });
+  ctx.strokeStyle = vc + '55'; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(14, 303, W-28, 62, 6); ctx.stroke();
+  ctx.fillStyle = vc; ctx.font = '10px monospace'; ctx.fillText('DEBUNK COMMENT', 26, 321);
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.65)'; ctx.font = '11px sans-serif'; wrapTxt(ctx, (d.debunk_comment || '').substring(0, 110), 26, 339, W-52, 16);
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.3)'; ctx.font = '10px monospace'; ctx.fillText('SOURCES', 18, 386);
+  (d.sources || []).slice(0, 3).forEach(function(s, i) { ctx.fillStyle = dark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.4)'; ctx.font = '10px monospace'; ctx.fillText('* ' + s.substring(0, 26), 18 + i*192, 400); });
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.2)'; ctx.font = '10px monospace'; ctx.textAlign = 'right'; ctx.fillText('verinova.ai', W-14, H-8); ctx.textAlign = 'left';
+}
+function dlCard(p) { var a = document.createElement('a'); a.download = 'verinova-' + p + '.png'; a.href = document.getElementById(p + 'can').toDataURL('image/png'); a.click(); }
+
+// ── NEWS FEED ──
+var allArticles = [
+  { verdict:'FAKE', confidence:97, title:'PM Modi Announces Free Petrol for All Indians Starting Next Month', reason:'No such announcement was made. This is a viral WhatsApp hoax with no government source.', source:'PIB Fact Check', url:'https://pib.gov.in/factcheck' },
+  { verdict:'REAL', confidence:95, title:'ISRO Successfully Launches INSAT-3DS Weather Satellite Into Orbit', reason:'Confirmed by ISRO official press release and multiple credible news sources.', source:'ISRO', url:'https://www.isro.gov.in' },
+  { verdict:'MISLEADING', confidence:88, title:'India Now Ranked 1st in World for Economic Growth — China Left Behind', reason:'India leads in GDP growth rate but not total GDP. Headline is misleading out of context.', source:'IMF Report', url:'https://www.imf.org' },
+  { verdict:'FAKE', confidence:99, title:'WhatsApp Will Start Charging Rs 500/Month From Next Week', reason:'WhatsApp has never charged users. This is a recurring hoax spread every few months.', source:'WhatsApp Official', url:'https://faq.whatsapp.com' },
+  { verdict:'REAL', confidence:92, title:'India Passes Digital Personal Data Protection Act', reason:'The DPDP Act was officially passed by Parliament and is now law.', source:'Ministry of Electronics', url:'https://meity.gov.in' },
+  { verdict:'PROPAGANDA', confidence:85, title:'Opposition Party Leader Says Government Planning to Remove Reservations', reason:'Statement taken out of context and amplified to cause communal tension before elections.', source:'AltNews', url:'https://www.altnews.in' },
+  { verdict:'FAKE', confidence:96, title:'Drinking Warm Turmeric Water Cures Cancer in 7 Days Say AIIMS Doctors', reason:'AIIMS never made this claim. No scientific evidence supports this. Health misinformation.', source:'AIIMS Official', url:'https://www.aiims.edu' },
+  { verdict:'REAL', confidence:90, title:'RBI Keeps Repo Rate Unchanged at 6.5% in Latest Monetary Policy Meeting', reason:'Confirmed by RBI official press release published on their website.', source:'Reserve Bank of India', url:'https://www.rbi.org.in' },
+  { verdict:'MISLEADING', confidence:82, title:'Viral Video Shows Flood in Bengaluru — Is It Recent?', reason:'The video is real but from 2022 floods being reshared as if it happened recently.', source:'Boom Live', url:'https://www.boomlive.in' },
+  { verdict:'FAKE', confidence:94, title:'Government to Deposit Rs 15 Lakh in Every Indian Bank Account This Diwali', reason:'No such scheme exists. This is a recurring fake news targeting rural voters.', source:'PIB Fact Check', url:'https://pib.gov.in/factcheck' }
+];
+var verdictEmoji = { REAL:'✅', FAKE:'🚨', MISLEADING:'⚠️', PROPAGANDA:'🔴', SATIRE:'😏', UNVERIFIED:'❓' };
+
+function renderCards(articles) {
+  var grid = document.getElementById('nfGrid');
+  if (!articles.length) { grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">No articles found.</div>'; return; }
+  grid.innerHTML = articles.map(function(a) {
+    var emoji = verdictEmoji[a.verdict] || '❓';
+    return '<a class="nf-card" href="' + a.url + '" target="_blank" rel="noopener">'
+      + '<div class="nf-card-placeholder">📰</div>'
+      + '<div class="nf-card-body">'
+      + '<span class="nf-badge b-' + a.verdict + '">' + emoji + ' ' + a.verdict + '</span>'
+      + '<div class="nf-card-title">' + a.title + '</div>'
+      + '<div class="nf-card-reason">"' + a.reason + '"</div>'
+      + '<div class="nf-card-footer"><span class="nf-card-source">' + a.source + '</span><span class="nf-card-conf">' + a.confidence + '% confidence</span></div>'
+      + '</div></a>';
+  }).join('');
+}
+
+function filterNews(btn, verdict) {
+  document.querySelectorAll('.nf-filter').forEach(function(b) { b.classList.remove('on'); });
+  btn.classList.add('on');
+  if (verdict === 'ALL') renderCards(allArticles);
+  else renderCards(allArticles.filter(function(a) { return a.verdict === verdict; }));
+}
+renderCards(allArticles);
+
+// ── DASHBOARD ──
+var checkHistory = currentUser ? JSON.parse(localStorage.getItem('vn-history-' + currentUser.email) || '[]') : [];
+
+function addToHistory(platform, claim, verdict, confidence) {
+  var entry = { platform: platform, claim: claim ? claim.substring(0, 80) : 'Unknown', verdict: verdict || 'UNVERIFIED', confidence: confidence || 0, time: new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) };
+  checkHistory.unshift(entry);
+  if (checkHistory.length > 20) checkHistory = checkHistory.slice(0, 20);
+  if (currentUser) localStorage.setItem('vn-history-' + currentUser.email, JSON.stringify(checkHistory));
+  updateDashboard();
+}
+
+function animateNum(id, target) {
+  var el = document.getElementById(id); if (!el) return;
+  var start = 0; var duration = 600; var startTime = null;
+  function step(ts) { if (!startTime) startTime = ts; var p = Math.min((ts-startTime)/duration,1); var e = 1-Math.pow(1-p,3); el.textContent = Math.round(start+(target-start)*e); if (p<1) requestAnimationFrame(step); }
+  requestAnimationFrame(step);
+}
+
+function updateDashboard() {
+  var counts = { TOTAL:0, FAKE:0, REAL:0, MISLEADING:0, PROPAGANDA:0, UNVERIFIED:0 };
+  checkHistory.forEach(function(e) { counts.TOTAL++; if (counts[e.verdict]!==undefined) counts[e.verdict]++; else counts.UNVERIFIED++; });
+  animateNum('dbTotal', counts.TOTAL); animateNum('dbFake', counts.FAKE);
+  animateNum('dbReal', counts.REAL);   animateNum('dbMisleading', counts.MISLEADING);
+  animateNum('dbPropaganda', counts.PROPAGANDA); animateNum('dbUnverified', counts.UNVERIFIED);
+  var hist = document.getElementById('dbHistory');
+  if (!checkHistory.length) {
+    hist.innerHTML = currentUser
+      ? '<div class="db-empty">No checks yet. Start fact-checking!</div>'
+      : '<div class="db-empty">🔒 <a onclick="openModal(\'login\')" style="color:var(--accent);cursor:pointer">Login</a> to save your history permanently.</div>';
+    return;
+  }
+  hist.innerHTML = checkHistory.map(function(e) {
+    var icon = e.platform === 'wa' ? '💬' : '🎬';
+    var style = badgeColors[e.verdict] || badgeColors.UNVERIFIED;
+    return '<div class="db-row"><span style="font-size:1rem">' + icon + '</span>'
+      + '<span class="db-row-badge" style="' + style + '">' + e.verdict + '</span>'
+      + '<span class="db-row-claim">' + e.claim + '</span>'
+      + '<div class="db-row-meta"><div>' + e.confidence + '%</div><div>' + e.time + '</div></div></div>';
+  }).join('');
+}
+
+function clearHistory() {
+  checkHistory = [];
+  if (currentUser) localStorage.removeItem('vn-history-' + currentUser.email);
+  updateDashboard();
+}
+
+// ── LANGUAGES ──
+var LANGS = ['Hindi','Bengali','Telugu','Marathi','Tamil','Urdu','Gujarati','Kannada','Odia','Malayalam','Punjabi','Assamese','Maithili','Santali','Kashmiri','Nepali','Sindhi','Konkani','Dogri','Manipuri','Bodo','Sanskrit'];
+document.getElementById('langPills').innerHTML = LANGS.map(function(l) { return '<span class="lang-pill">' + l + '</span>'; }).join('');
+
+// Init first page
+showPage('home');
+</script>
+</body>
+</html>
